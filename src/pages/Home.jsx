@@ -1,27 +1,44 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import PizzaBlock from '../components/PizzaBlock';
 import Skeleton from '../components/PizzaBlock/Skeleton';
 import Categories from '../components/Categories';
 import Sort from '../components/Sort';
 import Pagination from '../components/Pagination';
+import { SearchContext } from '../App';
+import { setCategoryId, setSort} from '../redux/slices/filterSlice';
 
-const Home = ({ searchValue }) => {
+const Home = () => {
+  const dispatch = useDispatch();
+  const {categoryId, sort} = useSelector((state) => state.filter);
+  console.log(categoryId);
+
+  const { searchValue } = useContext(SearchContext);
+
   const [pizzas, setPizzas] = useState([]);
   const [isLoading, setIsLoadign] = useState(true);
-  const [categoriesId, setCategoriesId] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortId, setSortId] = useState({
-    name: 'популярности',
-    sortProperty: 'rating',
-  });
+  // const [categoriesId, setCategoriesId] = useState(0);
+  // const [sortId, setSortId] = useState({
+  //   name: 'популярности',
+  //   sortProperty: 'rating',
+  // });
+
+  const onChangeCategory = (id) => {
+    dispatch(setCategoryId(id))
+  };
+
+  const onChangeSelect = (id) => {
+    dispatch(setSort(id));
+  };
 
   useEffect(() => {
     setIsLoadign(true);
 
-    const categorySort = categoriesId > 0 ? `category=${categoriesId}` : '';
-    const sortBy = sortId.sortProperty.replace('-', '');
-    const order = sortId.sortProperty.includes('-') ? 'asc' : 'desc';
+    const categorySort = categoryId > 0 ? `category=${categoryId}` : '';
+    const sortBy = sort.sortProperty.replace('-', '');
+    const order = sort.sortProperty.includes('-') ? 'asc' : 'desc';
     const search = searchValue ? `&search=${searchValue}` : '';
 
     fetch(
@@ -33,7 +50,7 @@ const Home = ({ searchValue }) => {
         setIsLoadign(false);
       });
     window.scrollTo(0, 0); // Чтобы при первом рендере нас кидало вверх (избавление от скролла при переходе на страницу с другой страницы)
-  }, [categoriesId, sortId, searchValue, currentPage]);
+  }, [categoryId, sort.sortProperty, searchValue, currentPage]);
 
   const items = pizzas
     // .filter((obj) => {
@@ -49,8 +66,8 @@ const Home = ({ searchValue }) => {
   return (
     <div className="container">
       <div className="content__top">
-        <Categories value={categoriesId} onChangeCategory={(id) => setCategoriesId(id)} />
-        <Sort value={sortId} onChangeSelect={(id) => setSortId(id)} />
+        <Categories value={categoryId} onChangeCategory={(id) => onChangeCategory(id)} />
+        <Sort value={sort} onChangeSelect={(id) => onChangeSelect(id)} />
       </div>
       <h2 className="content__title">Все пиццы</h2>
       <div className="content__items">{isLoading ? skeletons : items}</div>
