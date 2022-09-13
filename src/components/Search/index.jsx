@@ -1,11 +1,35 @@
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import debounce from 'lodash.debounce';
 import { useContext } from 'react';
 import { SearchContext } from '../../App';
 
 import styles from './Search.module.scss';
 
 const Search = () => {
-  const {searchValue, setSearchValue} = useContext(SearchContext);
+  const [value, setValue] = useState(''); // Состояние для того, чтобы сделать локально контролируемый инпут
+  const { setSearchValue } = useContext(SearchContext);
+
+  const inputRef = useRef();
+
+  const updateSearchValue = useCallback(
+    debounce((str) => {
+      setSearchValue(str);
+    }, 250),
+    [],
+  ); // Сохранение ссылки на отложенную функцию юс калбеком, чтобы не пересоздавалась каждый раз
+
+  const onChangeInput = (event) => {
+    setValue(event.target.value); // Моментально получать информацию и изменять состояние
+    updateSearchValue(event.target.value);
+  }; // Каждый раз когда меняется инпут, вызывается калбечная функция
+
+  const onClickClear = () => {
+    setSearchValue('');
+    setValue('');
+    // document.querySelector('input').focus()  // Для того, чтобы нажатие на крестик очищался инпут и возвращало курсор на инпут (так делать плохо, потому что обращение идет не через реакт, а через js напрямую к DOM элементу)
+    inputRef.current.focus();
+  };
+
   return (
     <div className={styles.root}>
       <svg
@@ -29,14 +53,15 @@ const Search = () => {
         </g>
       </svg>
       <input
-        value={searchValue}
-        onChange={(event) => setSearchValue(event.target.value)} // Эти 2 строки нужны для управления инпутом (управляемый инпут (контролируемый))
+        ref={inputRef}
+        value={value}
+        onChange={onChangeInput} // Эти 2 строки нужны для управления инпутом (управляемый инпут (контролируемый))
         className={styles.input}
         placeholder="Поиск пиццы..."
       />
-      {searchValue && (
+      {value && (
         <svg
-          onClick={() => setSearchValue('')} // Очистка интпута
+          onClick={() => onClickClear('')} // Очистка интпута
           className={styles.iconClear}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 320 512">
