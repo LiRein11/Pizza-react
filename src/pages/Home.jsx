@@ -19,7 +19,6 @@ const Home = () => {
   const isMounted = React.useRef(false);
 
   const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
-  console.log(categoryId);
 
   const { searchValue } = useContext(SearchContext);
 
@@ -70,7 +69,7 @@ const Home = () => {
       });
   };
 
-  // Если изменили параметры и был первый рендер происходит вшитие (после второго рендера (isMounted = false)). Это фикс того, чтобы при первом открытии приложения туда не вшивались параметры пицц, а была просто начальная страница.
+  // Если изменили параметры и был первый рендер происходит вшитие (после второго рендера (isMounted = false)). Это фикс того, чтобы при первом открытии приложения туда не вшивались параметры пицц, а была просто начальная страница. (15)
   useEffect(() => {
     if (isMounted.current) {
       const queryString = qs.stringify({

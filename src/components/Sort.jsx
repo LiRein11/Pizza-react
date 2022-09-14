@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setSort} from '../redux/slices/filterSlice';
+import { setSort } from '../redux/slices/filterSlice';
 
 export const sortList = [
   { name: 'популярности (DESC)', sortProperty: 'rating' },
@@ -12,6 +13,7 @@ export const sortList = [
 ];
 
 const Sort = () => {
+  const sortRef = useRef();
   const dispatch = useDispatch();
   const sort = useSelector((state) => state.filter.sort);
 
@@ -22,8 +24,20 @@ const Sort = () => {
     setOpen(false);
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.path.includes(sortRef.current)) {
+        setOpen(false);
+        console.log('gas');
+      }
+    };
+    document.body.addEventListener('click', handleClickOutside); // Первый mount (создание слушателя)
+
+    return () => document.body.removeEventListener('click', handleClickOutside); // Когда мы переходим на другую страницу, происходит Unmount (удаление слушателя событий)
+  }, []);
+
   return (
-    <div className="sort">
+    <div ref={sortRef} className="sort">
       <div className="sort__label">
         <svg
           width="10"
