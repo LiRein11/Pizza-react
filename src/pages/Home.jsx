@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import qs from 'qs';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,8 +8,8 @@ import Skeleton from '../components/PizzaBlock/Skeleton';
 import Categories from '../components/Categories';
 import Sort, { sortList } from '../components/Sort';
 import Pagination from '../components/Pagination';
-import { SearchContext } from '../App';
-import { setCategoryId, setSort, setCurrentPage, setFilters } from '../redux/slices/filterSlice';
+import { setCategoryId, setSort, setCurrentPage, setFilters, selectFilter } from '../redux/slices/filterSlice';
+import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice';
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -18,12 +17,10 @@ const Home = () => {
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
 
-  const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
+  const { items, status } = useSelector(selectPizzaData);
+  const { categoryId, sort, currentPage, searchValue } = useSelector(selectFilter);
 
-  const { searchValue } = useContext(SearchContext);
-
-  const [pizzas, setPizzas] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // const { searchValue } = useContext(SearchContext);
 
   // const [categoriesId, setCategoriesId] = useState(0);
   // const [sortId, setSortId] = useState({
@@ -43,9 +40,7 @@ const Home = () => {
     dispatch(setSort(id));
   };
 
-  const fetchPizzas = () => {
-    setIsLoading(true);
-
+  const getPizzas = async () => {
     const categorySort = categoryId > 0 ? `category=${categoryId}` : '';
     const sortBy = sort.sortProperty.replace('-', '');
     const order = sort.sortProperty.includes('-') ? 'asc' : 'desc';
@@ -59,14 +54,35 @@ const Home = () => {
     //       setPizzas(arr);
     //       setIsLoading(false);
     //     });  // Fetch запрос
-    axios
-      .get(
-        `https://6319b9746b4c78d91b41db16.mockapi.io/items?page=${currentPage}&limit=4&${categorySort}&sortBy=${sortBy}&order=${order}${search}`,
-      )
-      .then((res) => {
-        setPizzas(res.data);
-        setIsLoading(false);
-      });
+    // await axios
+    //   .get(
+    //     `https://6319b9746b4c78d91b41db16.mockapi.io/items?page=${currentPage}&limit=4&${categorySort}&sortBy=${sortBy}&order=${order}${search}`,
+    //   )
+    //   .then((res) => {
+    //     setPizzas(res.data);
+    //     setIsLoading(false);
+    //     // console.log('Первое');
+    //   });
+    // console.log('Второе') // Именно благодаря асинхронности это будет ждать, пока выполнится запрос на сервер с ответом, поэтому второе, без асинхронности это выполнится первым. Async всегда кидается на главную функцию, где используется await. Но если в функции есть еще функция, где нужно использовать await, то и на эту функцию нужен async.
+
+    // try {
+    // setPizzas(res.data);
+    dispatch(
+      fetchPizzas({
+        categorySort,
+        sortBy,
+        order,
+        search,
+        currentPage,
+      }),
+    );
+    // } catch (error) {
+    //   console.log(error, 'error');
+    //   alert('Ошибка при получении пицц');
+    // }
+    // Благодаря async await можно избежать использования .then, выше все способы обращения к серверу. Больше не нужно, тк вся логика теперь в редаксе.
+
+    window.scrollTo(0, 0); // Скролл вверх
   };
 
   // Если изменили параметры и был первый рендер происходит вшитие (после второго рендера (isMounted = false)). Это фикс того, чтобы при первом открытии приложения туда не вшивались параметры пицц, а была просто начальная страница. (15)
@@ -93,20 +109,17 @@ const Home = () => {
       dispatch(setFilters({ ...params, sort }));
       isSearch.current = true;
     }
-  }, []);
+  }, [categoryId, sort.sortProperty, currentPage]);
 
   // Если был первый рендер, то запрашиваем пиццы
   useEffect(() => {
     window.scrollTo(0, 0); // Чтобы при первом рендере нас кидало вверх (избавление от скролла при переходе на страницу с другой страницы)
-
-    if (!isSearch.current) {
-      fetchPizzas();
-    }
+    getPizzas();
 
     isSearch.current = false;
   }, [categoryId, sort.sortProperty, searchValue, currentPage]);
 
-  const items = pizzas
+  const pizzas = items
     // .filter((obj) => {
     //   if (obj.title.toLowerCase().includes(searchValue.toLowerCase())) {
     //     return true;
@@ -124,7 +137,14 @@ const Home = () => {
         <Sort value={sort} onChangeSelect={(id) => onChangeSelect(id)} />
       </div>
       <h2 className="content__title">Все пиццы</h2>
-      <div className="content__items">{isLoading ? skeletons : items}</div>
+      {status === 'error' ? (
+        <div className='content__error-info'>
+          <h2>Произошла ошибка 😕</h2>
+          <p>К сожалению, не удалось получить пиццы. Попробуйте повторить попытку позже.</p>
+        </div>
+      ) : (
+        <div className="content__items">{status === 'loading' ? skeletons : pizzas}</div>
+      )}
       <Pagination currentPage={currentPage} onChangePage={onChangePage} />
     </div>
   );

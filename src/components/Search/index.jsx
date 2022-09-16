@@ -1,19 +1,21 @@
 import React, { useCallback, useRef, useState } from 'react';
 import debounce from 'lodash.debounce';
-import { useContext } from 'react';
-import { SearchContext } from '../../App';
+
 
 import styles from './Search.module.scss';
+import { useDispatch } from 'react-redux';
+import { setSearchValue } from '../../redux/slices/filterSlice';
 
 const Search = () => {
+  const dispatch = useDispatch();
   const [value, setValue] = useState(''); // Состояние для того, чтобы сделать локально контролируемый инпут
-  const { setSearchValue } = useContext(SearchContext);
+  // const { setSearchValue } = useContext(SearchContext);
 
   const inputRef = useRef();
 
   const updateSearchValue = useCallback(
     debounce((str) => {
-      setSearchValue(str);
+      dispatch(setSearchValue(str));
     }, 250),
     [],
   ); // Сохранение ссылки на отложенную функцию юс калбеком, чтобы не пересоздавалась каждый раз
@@ -24,7 +26,7 @@ const Search = () => {
   }; // Каждый раз когда меняется инпут, вызывается калбечная функция
 
   const onClickClear = () => {
-    setSearchValue('');
+    dispatch(setSearchValue(''));
     setValue('');
     // document.querySelector('input').focus()  // Для того, чтобы нажатие на крестик очищался инпут и возвращало курсор на инпут (так делать плохо, потому что обращение идет не через реакт, а через js напрямую к DOM элементу)
     inputRef.current.focus();
