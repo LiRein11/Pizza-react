@@ -6,21 +6,21 @@ import styles from './Search.module.scss';
 import { useDispatch } from 'react-redux';
 import { setSearchValue } from '../../redux/slices/filterSlice';
 
-const Search = () => {
+const Search:React.FC = () => {
   const dispatch = useDispatch();
-  const [value, setValue] = useState(''); // Состояние для того, чтобы сделать локально контролируемый инпут
+  const [value, setValue] = useState<string>(''); // Состояние для того, чтобы сделать локально контролируемый инпут
   // const { setSearchValue } = useContext(SearchContext);
 
-  const inputRef = useRef();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const updateSearchValue = useCallback(
-    debounce((str) => {
+    debounce((str:string) => {
       dispatch(setSearchValue(str));
     }, 250),
     [],
   ); // Сохранение ссылки на отложенную функцию юс калбеком, чтобы не пересоздавалась каждый раз
 
-  const onChangeInput = (event) => {
+  const onChangeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value); // Моментально получать информацию и изменять состояние
     updateSearchValue(event.target.value);
   }; // Каждый раз когда меняется инпут, вызывается калбечная функция
@@ -29,7 +29,10 @@ const Search = () => {
     dispatch(setSearchValue(''));
     setValue('');
     // document.querySelector('input').focus()  // Для того, чтобы нажатие на крестик очищался инпут и возвращало курсор на инпут (так делать плохо, потому что обращение идет не через реакт, а через js напрямую к DOM элементу)
-    inputRef.current.focus();
+    // if (inputRef.current) {
+    //   inputRef.current.focus();
+    // } Или так пофиксить тс
+    inputRef.current?.focus(); // Или так. Тут юзается оператор опциональной последовательноссти (optional chaining) = ?
   };
 
   return (
@@ -63,7 +66,7 @@ const Search = () => {
       />
       {value && (
         <svg
-          onClick={() => onClickClear('')} // Очистка интпута
+          onClick={onClickClear} // Очистка интпута
           className={styles.iconClear}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 320 512">

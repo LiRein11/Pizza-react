@@ -8,10 +8,10 @@ import Skeleton from '../components/PizzaBlock/Skeleton';
 import Categories from '../components/Categories';
 import Sort, { sortList } from '../components/Sort';
 import Pagination from '../components/Pagination';
-import { setCategoryId, setSort, setCurrentPage, setFilters, selectFilter } from '../redux/slices/filterSlice';
+import { setCategoryId, setCurrentPage, setFilters, selectFilter } from '../redux/slices/filterSlice';
 import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice';
 
-const Home = () => {
+const Home:React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isSearch = React.useRef(false);
@@ -28,17 +28,17 @@ const Home = () => {
   //   sortProperty: 'rating',
   // });
 
-  const onChangeCategory = (id) => {
-    dispatch(setCategoryId(id));
+  const onChangeCategory = (idx:number) => {
+    dispatch(setCategoryId(idx));
   };
 
-  const onChangePage = (number) => {
-    dispatch(setCurrentPage(number));
+  const onChangePage = (page:number) => {
+    dispatch(setCurrentPage(page));
   };
 
-  const onChangeSelect = (id) => {
-    dispatch(setSort(id));
-  };
+  // const onChangeSelect = (id) => {
+  //   dispatch(setSort(id));
+  // };
 
   const getPizzas = async () => {
     const categorySort = categoryId > 0 ? `category=${categoryId}` : '';
@@ -68,6 +68,7 @@ const Home = () => {
     // try {
     // setPizzas(res.data);
     dispatch(
+      // @ts-ignore
       fetchPizzas({
         categorySort,
         sortBy,
@@ -126,15 +127,17 @@ const Home = () => {
     //   }
     //   return false;
     // })  // Фильтрация по поиску пицц и вывод массива пицц через React.js (но если массив не статичный, то нужно с беком работать)
-    .map((obj) => <PizzaBlock key={obj.id} {...obj} />);
+    .map((obj:any) => <PizzaBlock key={obj.id} {...obj} />);
 
   const skeletons = [...new Array(6)].map((_, index) => <Skeleton key={index} />);
 
+  // value={sort} onChangeSelect={(id) => onChangeSelect(id)}
+  
   return (
     <div className="container">
       <div className="content__top">
         <Categories value={categoryId} onChangeCategory={(id) => onChangeCategory(id)} />
-        <Sort value={sort} onChangeSelect={(id) => onChangeSelect(id)} />
+        <Sort />
       </div>
       <h2 className="content__title">Все пиццы</h2>
       {status === 'error' ? (
