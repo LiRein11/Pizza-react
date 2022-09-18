@@ -1,5 +1,5 @@
-import React, { useEffect} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import qs from 'qs';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,11 +8,17 @@ import Skeleton from '../components/PizzaBlock/Skeleton';
 import Categories from '../components/Categories';
 import Sort, { sortList } from '../components/Sort';
 import Pagination from '../components/Pagination';
-import { setCategoryId, setCurrentPage, setFilters, selectFilter } from '../redux/slices/filterSlice';
-import { fetchPizzas, selectPizzaData } from '../redux/slices/pizzaSlice';
+import {
+  setCategoryId,
+  setCurrentPage,
+  setFilters,
+  selectFilter,
+} from '../redux/slices/filterSlice';
+import { fetchPizzas, SearchPizzaParams, selectPizzaData } from '../redux/slices/pizzaSlice';
+import { useAppDispatch } from '../redux/store';
 
-const Home:React.FC = () => {
-  const dispatch = useDispatch();
+const Home: React.FC = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const isSearch = React.useRef(false);
   const isMounted = React.useRef(false);
@@ -28,11 +34,11 @@ const Home:React.FC = () => {
   //   sortProperty: 'rating',
   // });
 
-  const onChangeCategory = (idx:number) => {
+  const onChangeCategory = (idx: number) => {
     dispatch(setCategoryId(idx));
   };
 
-  const onChangePage = (page:number) => {
+  const onChangePage = (page: number) => {
     dispatch(setCurrentPage(page));
   };
 
@@ -68,13 +74,12 @@ const Home:React.FC = () => {
     // try {
     // setPizzas(res.data);
     dispatch(
-      // @ts-ignore
       fetchPizzas({
-        categorySort,
         sortBy,
+        categoryId: String(categoryId),
         order,
         search,
-        currentPage,
+        currentPage: String(currentPage),
       }),
     );
     // } catch (error) {
@@ -89,25 +94,37 @@ const Home:React.FC = () => {
   // Если изменили параметры и был первый рендер происходит вшитие (после второго рендера (isMounted = false)). Это фикс того, чтобы при первом открытии приложения туда не вшивались параметры пицц, а была просто начальная страница. (15)
   useEffect(() => {
     if (isMounted.current) {
-      const queryString = qs.stringify({
+      const params = qs.stringify({
         sortProperty: sort.sortProperty,
-        categoryId,
+        categoryId: categoryId > 0 ? categoryId : null,
         currentPage,
       });
 
-      navigate(`?${queryString}`);
+      const queryString = qs.stringify(params, { skipNulls: true });
+
+      navigate(`/?${queryString}`);
     }
-    isMounted.current = true;
+
+    if (!window.location.search) {
+      dispatch(fetchPizzas({} as SearchPizzaParams));
+    }
   }, [categoryId, sort.sortProperty, currentPage]);
 
   // Если был первый рендер, то проверяем и сравниваем URL-параметры и сохраняем в редаксе
   useEffect(() => {
     if (window.location.search) {
-      const params = qs.parse(window.location.search.substring(1)); // Убираем первый символ ?, потому что его не должно быть изначально
+      const params = qs.parse(window.location.search.substring(1)) as unknown as SearchPizzaParams; // Убираем первый символ ?, потому что его не должно быть изначально
 
-      const sort = sortList.find((obj) => obj.sortProperty === params.sortProperty);
+      const sort = sortList.find((obj) => obj.sortProperty === params.sortBy);
 
-      dispatch(setFilters({ ...params, sort }));
+      dispatch(
+        setFilters({
+          searchValue: params.search,
+          categoryId: Number(params.categoryId),
+          currentPage: Number(params.currentPage),
+          sort: sort || sortList[0],
+        }),
+      );
       isSearch.current = true;
     }
   }, [categoryId, sort.sortProperty, currentPage]);
@@ -127,12 +144,12 @@ const Home:React.FC = () => {
     //   }
     //   return false;
     // })  // Фильтрация по поиску пицц и вывод массива пицц через React.js (но если массив не статичный, то нужно с беком работать)
-    .map((obj:any) => <PizzaBlock key={obj.id} {...obj} />);
+    .map((obj: any) => <PizzaBlock {...obj} />);
 
   const skeletons = [...new Array(6)].map((_, index) => <Skeleton key={index} />);
 
   // value={sort} onChangeSelect={(id) => onChangeSelect(id)}
-  
+
   return (
     <div className="container">
       <div className="content__top">
@@ -141,7 +158,7 @@ const Home:React.FC = () => {
       </div>
       <h2 className="content__title">Все пиццы</h2>
       {status === 'error' ? (
-        <div className='content__error-info'>
+        <div className="content__error-info">
           <h2>Произошла ошибка 😕</h2>
           <p>К сожалению, не удалось получить пиццы. Попробуйте повторить попытку позже.</p>
         </div>
