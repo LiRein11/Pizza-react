@@ -15,7 +15,7 @@ body {
   border-radius: 10px;
   max-width: 1400px;
 
-  @media(max-width: 645px){
+  @media (max-width: 645px) {
     width: calc(100vw - 30px);
     margin-top: 15px;
   }
@@ -24,18 +24,18 @@ body {
 .content {
   padding: 40px 0;
 
-  &__error-info{
+  &__error-info {
     margin: 100px auto;
     width: 500px;
     text-align: center;
-    h2{
+    h2 {
       font-size: 32px;
       margin-bottom: 10px;
       font-weight: 700;
     }
 
-    p{
-     font-size: 20px; 
+    p {
+      font-size: 20px;
     }
   }
 
@@ -142,7 +142,7 @@ body {
     }
   }
 
-  .content__items{
+  .content__items {
     display: block;
   }
 
@@ -225,6 +225,26 @@ body {
         svg {
           path:first-of-type {
             display: none;
+          }
+        }
+        &--disabled {
+          opacity: 0.4;
+          border-color: #787878;
+
+          &:active {
+            transform: none;
+          }
+
+          &:hover {
+            background-color: transparent;
+
+            svg path {
+              fill: #787878;
+            }
+          }
+
+          svg path {
+            fill: #787878;
           }
         }
       }
