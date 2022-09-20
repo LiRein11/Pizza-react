@@ -6,7 +6,7 @@ import LogoSvg from '../assets/img/pizza-logo.svg';
 import { cartSelector } from '../redux/cart/selectors';
 import Search from './Search';
 
-const Header = () => {
+const Header:React.FC = () => {
   const { items, totalPrice } = useSelector(cartSelector);
   const location = useLocation();
   const isMounted = React.useRef(false);
